@@ -24,6 +24,9 @@ environments:
 # Test cases, bug reports, and run history all live as Obsidian notes in docs/ instead.
 # See .claude/skills/qa-obsidian-notes/SKILL.md for the taxonomy, and AGENTS.md's
 # tool-resolution table for how [ISSUE_TRACKER_TOOL] / [TMS_TOOL] would resolve if one gets added.
+#
+# JIRA_TOKEN exists in .env (local) and as a GitHub Actions secret (CI) as of 2026-09, ready for
+# whenever real Jira integration gets added — but no skill reads it yet, so it's currently inert.
 
 notes_vault:
   provider: "obsidian"
