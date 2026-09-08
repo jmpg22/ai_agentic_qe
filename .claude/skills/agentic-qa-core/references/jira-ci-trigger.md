@@ -42,4 +42,7 @@ The `ai-qa-picked-up` label gets added *before* this job runs, so if this run fa
 
 ## Testing this without waiting for a real ticket
 
-Run the workflow manually (Actions tab -> Jira QA Trigger -> Run workflow) with the `ticket_key` input set to a specific ticket — it skips the status/label filter and processes just that one ticket, regardless of its current status.
+Two ways, both do the real thing (not a dry run):
+
+- **Manual run**: Actions tab -> Jira QA Trigger -> Run workflow, with the `ticket_key` input set to a specific ticket — skips the status/label filter and processes just that one ticket, regardless of its current status.
+- **Open a PR that touches this workflow file** (or this doc): the `pull_request` trigger is scoped to changes to `.github/workflows/jira-qa-trigger.yml` and this file specifically, so iterating on the trigger itself gets fast feedback without waiting on the 15-minute schedule. It still polls real Jira and can act on real tickets — it's scoped by file path, not made safe by being a PR.

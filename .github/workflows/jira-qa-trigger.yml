@@ -13,6 +13,12 @@
 #
 # Also required: the Claude GitHub App installed on this repo - https://github.com/apps/claude
 # See .claude/skills/agentic-qa-core/references/jira-ci-trigger.md for what happens inside the job.
+#
+# The pull_request trigger below is scoped to PRs that touch this workflow file (or its doc) -
+# it's a fast way to smoke-test a change to the trigger itself against real Jira/CI, without
+# waiting for the 15-minute schedule. It still does the real thing (polls Jira, can open a PR,
+# comments on a real ticket) - it's not a dry run. Broaden the `paths:` filter (or drop it) if you
+# want this to run on every PR instead of just ones editing this file.
 
 name: Jira QA Trigger
 
@@ -25,6 +31,11 @@ on:
         description: "Optional: test with one specific ticket key instead of polling for QA-status tickets"
         required: false
         type: string
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/jira-qa-trigger.yml"
+      - ".claude/skills/agentic-qa-core/references/jira-ci-trigger.md"
 
 concurrency:
   group: jira-qa-trigger
