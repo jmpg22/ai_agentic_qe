@@ -67,7 +67,6 @@ jobs:
           : "${JIRA_SITE:?Set the JIRA_SITE repo variable}"
           : "${JIRA_EMAIL:?Set the JIRA_EMAIL repo secret}"
           : "${JIRA_TOKEN:?Set the JIRA_TOKEN repo secret}"
-
           if [ -n "${TICKET_KEY_OVERRIDE:-}" ]; then
             if ! [[ "$TICKET_KEY_OVERRIDE" =~ ^[A-Za-z][A-Za-z0-9]*-[0-9]+$ ]]; then
               echo "::error::ticket_key '$TICKET_KEY_OVERRIDE' doesn't look like a Jira issue key (expected something like SCRUM-1). Leave ticket_key BLANK to run the real JIRA_LABEL search instead - it is not the place for JIRA_LABEL's value."
@@ -81,56 +80,47 @@ jobs:
             # for the "OR labels is EMPTY" workaround this query needed when it filtered by status.
             JQL="labels = \"${JIRA_LABEL}\" AND labels != \"ai-qa-picked-up\""
           fi
-
           BODY=$(jq -n --arg jql "$JQL" '{jql: $jql, maxResults: 25, fields: ["key","summary"]}')
-
           echo "JQL: $JQL"
-
           HTTP_STATUS=$(curl -sS -o response.json -w "%{http_code}" -X POST \
             -u "${JIRA_EMAIL}:${JIRA_TOKEN}" \
             -H "Content-Type: application/json" -H "Accept: application/json" \
             --data "$BODY" \
             "https://${JIRA_SITE}/rest/api/3/search/jql")
-
           echo "Jira responded HTTP $HTTP_STATUS"
-
           if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
             echo "::error::Jira API call failed (HTTP $HTTP_STATUS) - check JIRA_SITE/JIRA_EMAIL/JIRA_TOKEN and that JIRA_LABEL is exactly right. Response body:"
             cat response.json
             exit 1
           fi
-
           if jq -e '.errorMessages or .errors' response.json > /dev/null 2>&1; then
             echo "::error::Jira returned 200 but with an error body (bad JQL - check JIRA_LABEL spelling/case):"
             cat response.json
             exit 1
           fi
-
-          jq -c '[.issues[]? | {key: .key, summary: .fields.summary}]' response.json > tickets.json
+          # CHANGED: Output only ticket keys as a simple array for matrix
+          jq -c '[.issues[]?.key]' response.json > tickets.json
           COUNT=$(jq 'length' tickets.json)
           echo "tickets=$(cat tickets.json)" >> "$GITHUB_OUTPUT"
           if [ "$COUNT" -gt 0 ]; then echo "has_tickets=true" >> "$GITHUB_OUTPUT"; else echo "has_tickets=false" >> "$GITHUB_OUTPUT"; fi
           echo "Found $COUNT ticket(s) matching: $JQL"
-
       - name: Mark tickets as picked up + post a "testing started" comment
         if: steps.find.outputs.has_tickets == 'true'
         run: |
           set -euo pipefail
-          jq -r '.[].key' tickets.json | while read -r KEY; do
+          jq -r '.[]' tickets.json | while read -r KEY; do
             echo "Claiming $KEY"
             curl -sS -X PUT \
               -u "${JIRA_EMAIL}:${JIRA_TOKEN}" \
               -H "Content-Type: application/json" \
               --data '{"update":{"labels":[{"add":"ai-qa-picked-up"}]}}' \
               "https://${JIRA_SITE}/rest/api/3/issue/${KEY}"
-
             curl -sS -X POST \
               -u "${JIRA_EMAIL}:${JIRA_TOKEN}" \
               -H "Content-Type: application/json" \
               --data '{"body":{"type":"doc","version":1,"content":[{"type":"paragraph","content":[{"type":"text","text":"AI QA picked this up and started a sprint-testing pass. Results will follow as a comment here, with a pull request in the repo."}]}]}}' \
               "https://${JIRA_SITE}/rest/api/3/issue/${KEY}/comment"
           done
-
   run-sprint-testing:
     needs: find-tickets
     if: needs.find-tickets.outputs.has_tickets == 'true'
@@ -168,7 +158,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Run /sprint-testing for ${{ matrix.ticket.key }}
+      - name: Run /sprint-testing for ${{ matrix.ticket }}
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -176,16 +166,13 @@ jobs:
           # above with: claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             /sprint-testing
-
-            Jira ticket ${{ matrix.ticket.key }}: "${{ matrix.ticket.summary }}"
-
+            Jira ticket ${{ matrix.ticket }}: "Run the sprint-testing plan against this ticket"
             This ticket is tagged for AI QA testing. Run the sprint-testing plan -> execute -> report
             phases against it. File the ATR and any bug notes under docs/ exactly as
             .claude/skills/qa-obsidian-notes/SKILL.md describes.
-
             Then follow .claude/skills/agentic-qa-core/references/jira-ci-trigger.md for how to
             open a pull request with what you found and how to comment the result back on
-            ticket ${{ matrix.ticket.key }} in Jira.
+            ticket ${{ matrix.ticket }} in Jira.
           claude_args: |
             --allowedTools "Read,Write,Edit,Bash,Grep,Glob"
             --max-turns 30
