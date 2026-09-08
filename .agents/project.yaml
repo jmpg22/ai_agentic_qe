@@ -42,8 +42,11 @@ architecture:
   doc: ".claude/skills/test-automation/references/architecture.md"
 
 ci:
-  configured: false
-  # No .github/workflows yet. regression-testing runs locally (npx playwright test) until CI exists.
+  configured: true
+  workflow: ".github/workflows/playwright.yml"
+  triggers: [push to main, pull_request to main, workflow_dispatch]
+  # No secrets required today - the target (playwright.dev) is public. Add repo secrets only
+  # once a real, authenticated target replaces the sandbox (see environments.sandbox above).
 
 staff:
   doc: ".claude/skills/agentic-qa-core/references/staff-roles.md"

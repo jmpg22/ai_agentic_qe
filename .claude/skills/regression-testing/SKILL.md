@@ -9,7 +9,7 @@ The gate before anything ships. Runs the whole suite, tells you not just pass/fa
 
 ## Process
 
-1. Run `npx playwright test` (all three projects — chromium/firefox/webkit — unless the user scopes it down).
+1. Run the suite: locally with `npx playwright test` (all three projects — chromium/firefox/webkit — unless scoped down), or read the results from the latest `.github/workflows/playwright.yml` run on GitHub Actions (Actions tab → run → download the `playwright-report` / `test-results` artifacts) when checking a push/PR instead of running locally.
 2. Read the results from `playwright-report/` / `test-results/` — don't just eyeball the terminal summary, the HTML report has the trace/screenshot evidence for anything that failed.
 3. Classify every failure:
    - **Application bug** — the app genuinely misbehaved. File a bug note per `agentic-qa-core/references/defect-notes-doctrine.md`.

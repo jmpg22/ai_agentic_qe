@@ -61,6 +61,8 @@ You don't need special commands. Just describe what you want in your own words. 
 > "Are we safe to release? Run everything."
 → Runs the full test suite and gives you a clear **GO / CAUTION / NO-GO** answer, with reasons.
 
+This also happens automatically every time code is pushed to GitHub — you can watch it run under the repository's **Actions** tab, no setup needed on your end.
+
 If you're not sure what to ask for, just describe your situation in plain language — "we just built X, what should I do next?" — and you'll get pointed in the right direction.
 
 ## 5. How to read a GO / CAUTION / NO-GO verdict

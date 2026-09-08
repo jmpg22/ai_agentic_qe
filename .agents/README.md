@@ -19,7 +19,7 @@ Full test scope/coverage detail lives in `.context/`, not here — `project.yaml
 ## When to edit `project.yaml` by hand
 
 - The target environment changes from the `sandbox` (playwright.dev) placeholder to a real application — update `environments.sandbox` (or add a new env) and `.context/business/business-feature-map.md` together.
-- CI gets set up — flip `ci.configured` to `true` and note the workflow file, so `regression-testing` knows to read CI results instead of assuming a local run.
+- CI changes (a new trigger, a matrix, secrets get added) — keep `ci.configured`/`ci.workflow`/`ci.triggers` in sync with `.github/workflows/playwright.yml` so `regression-testing` knows what's actually running.
 - A real issue tracker or TMS gets added later — add an `issue_tracker:`/`tms:` block here (see `turn_test_engine`'s `project.yaml` for the shape, if you want a reference) and update `AGENTS.md`'s tool-resolution table to match.
 
 ## Active environment per session

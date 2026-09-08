@@ -93,3 +93,5 @@ For the technical reference: `AGENTS.md` is the persistent memory (loaded every 
 Staff (subagents under `.claude/agents/`): `qa-test-architect` (Plan), `qa-automation-engineer` (Code), `qa-code-reviewer` (Review), `qa-exploratory-tester` (Exploration), `qa-regression-analyst` (Bulk/regression).
 
 No issue tracker or TMS is wired up here on purpose — test cases, bugs, and run history live as Obsidian notes in `docs/` instead (`/qa-obsidian-notes`). This project currently points at a sandbox target (`https://playwright.dev`) rather than a real application — swap that in `.agents/project.yaml` and `.context/business/business-feature-map.md` whenever a real target is ready.
+
+**CI**: `.github/workflows/playwright.yml` runs the suite (chromium/firefox/webkit) on every push/PR to `main`, plus manual `workflow_dispatch`. No secrets required today — nothing needs authenticating against the public sandbox target.
