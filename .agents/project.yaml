@@ -1,0 +1,50 @@
+# Project variables the agentic QA pipeline reads instead of guessing.
+# {{VAR}} in a skill = read from here. [TAG_TOOL] in a skill = resolved per AGENTS.md's tool-resolution table.
+
+project:
+  name: "ai_agentic_qe"
+  description: "Sandbox Playwright + TypeScript project for trying out the agentic QA pipeline itself."
+  repo: "https://github.com/jmpg22/ai_agentic_qe"
+  default_branch: "main"
+
+testing:
+  framework: "playwright"
+  language: "typescript"
+  test_dir: "tests"
+  default_env: "sandbox"
+
+environments:
+  sandbox:
+    base_url: "https://playwright.dev"
+    # This is the placeholder target the existing sample spec (tests/example.spec.ts) exercises.
+    # Swap this whole block out (and update .context/business/business-feature-map.md) once
+    # a real application is the actual target.
+
+# No issue_tracker / TMS block on purpose — this project has neither Jira nor Zephyr wired up.
+# Test cases, bug reports, and run history all live as Obsidian notes in docs/ instead.
+# See .claude/skills/qa-obsidian-notes/SKILL.md for the taxonomy, and AGENTS.md's
+# tool-resolution table for how [ISSUE_TRACKER_TOOL] / [TMS_TOOL] would resolve if one gets added.
+
+notes_vault:
+  provider: "obsidian"
+  path: "docs/"
+  # docs/ IS the vault root - open it directly in Obsidian (File -> Open folder as vault).
+  # No .obsidian/ config is checked in; Obsidian generates its own on first open.
+  taxonomy_doc: ".claude/skills/qa-obsidian-notes/SKILL.md"
+  # If the Desktop Commander plugin's obsidian-vault skill is installed, it's the preferred
+  # way to actually read/write notes here - qa-obsidian-notes documents the taxonomy either way.
+
+architecture:
+  pattern: "BasePage -> domain Page -> spec"
+  base_page: "tests/page-objects/base.page.ts"
+  import_alias:
+    "@/*": "tests/*"
+  doc: ".claude/skills/test-automation/references/architecture.md"
+
+ci:
+  configured: false
+  # No .github/workflows yet. regression-testing runs locally (npx playwright test) until CI exists.
+
+staff:
+  doc: ".claude/skills/agentic-qa-core/references/staff-roles.md"
+  agents_dir: ".claude/agents/"
