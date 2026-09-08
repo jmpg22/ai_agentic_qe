@@ -1,10 +1,9 @@
-# Polls Jira for tickets that entered QA status and runs /sprint-testing against each one
+# Polls Jira for tickets tagged with a specific label and runs /sprint-testing against each one
 # via the Claude Code GitHub Action, on its own branch, opening a PR with the results.
 #
 # Required GitHub repo VARIABLES (Settings -> Secrets and variables -> Actions -> Variables):
-#   JIRA_SITE          e.g. "yourcompany.atlassian.net" (no https://)
-#   JIRA_PROJECT_KEY   e.g. "TURN"
-#   JIRA_QA_STATUS     exact Jira status name, e.g. "QA"
+#   JIRA_SITE    e.g. "yourcompany.atlassian.net" (no https://)
+#   JIRA_LABEL   exact Jira label - every ticket tagged with it gets picked up, any status/project.
 #
 # Required GitHub repo SECRETS (Settings -> Secrets and variables -> Actions -> Secrets):
 #   JIRA_EMAIL          the Atlassian account email paired with JIRA_TOKEN
@@ -28,7 +27,7 @@ on:
   workflow_dispatch:
     inputs:
       ticket_key:
-        description: "Optional: test with one specific ticket key instead of polling for QA-status tickets"
+        description: "Optional: test with one specific ticket key instead of polling for tickets tagged with JIRA_LABEL"
         required: false
         type: string
   pull_request:
@@ -49,8 +48,7 @@ jobs:
       has_tickets: ${{ steps.find.outputs.has_tickets }}
     env:
       JIRA_SITE: ${{ vars.JIRA_SITE }}
-      JIRA_PROJECT_KEY: ${{ vars.JIRA_PROJECT_KEY }}
-      JIRA_QA_STATUS: ${{ vars.JIRA_QA_STATUS }}
+      JIRA_LABEL: ${{ vars.JIRA_LABEL }}
       JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
       JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
       TICKET_KEY_OVERRIDE: ${{ github.event.inputs.ticket_key }}
@@ -66,9 +64,11 @@ jobs:
           if [ -n "${TICKET_KEY_OVERRIDE:-}" ]; then
             JQL="key = \"${TICKET_KEY_OVERRIDE}\""
           else
-            : "${JIRA_PROJECT_KEY:?Set the JIRA_PROJECT_KEY repo variable}"
-            : "${JIRA_QA_STATUS:?Set the JIRA_QA_STATUS repo variable}"
-            JQL="project = \"${JIRA_PROJECT_KEY}\" AND status = \"${JIRA_QA_STATUS}\" AND (labels != \"ai-qa-picked-up\" OR labels is EMPTY)"
+            : "${JIRA_LABEL:?Set the JIRA_LABEL repo variable}"
+            # A ticket matching labels = "$JIRA_LABEL" always has a non-empty labels field, so the
+            # "!= excludes empty" JQL gotcha (see jira-ci-trigger.md) doesn't apply here - no need
+            # for the "OR labels is EMPTY" workaround this query needed when it filtered by status.
+            JQL="labels = \"${JIRA_LABEL}\" AND labels != \"ai-qa-picked-up\""
           fi
 
           BODY=$(jq -n --arg jql "$JQL" '{jql: $jql, maxResults: 25, fields: ["key","summary"]}')
@@ -84,13 +84,13 @@ jobs:
           echo "Jira responded HTTP $HTTP_STATUS"
 
           if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
-            echo "::error::Jira API call failed (HTTP $HTTP_STATUS) - check JIRA_SITE/JIRA_EMAIL/JIRA_TOKEN and that the project key/status name are exactly right. Response body:"
+            echo "::error::Jira API call failed (HTTP $HTTP_STATUS) - check JIRA_SITE/JIRA_EMAIL/JIRA_TOKEN and that JIRA_LABEL is exactly right. Response body:"
             cat response.json
             exit 1
           fi
 
           if jq -e '.errorMessages or .errors' response.json > /dev/null 2>&1; then
-            echo "::error::Jira returned 200 but with an error body (bad JQL - check JIRA_PROJECT_KEY/JIRA_QA_STATUS spelling and case):"
+            echo "::error::Jira returned 200 but with an error body (bad JQL - check JIRA_LABEL spelling/case):"
             cat response.json
             exit 1
           fi
@@ -168,7 +168,7 @@ jobs:
 
             Jira ticket ${{ matrix.ticket.key }}: "${{ matrix.ticket.summary }}"
 
-            This ticket just moved to QA status. Run the sprint-testing plan -> execute -> report
+            This ticket is tagged for AI QA testing. Run the sprint-testing plan -> execute -> report
             phases against it. File the ATR and any bug notes under docs/ exactly as
             .claude/skills/qa-obsidian-notes/SKILL.md describes.
 

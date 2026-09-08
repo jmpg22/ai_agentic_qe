@@ -1,8 +1,8 @@
 # Jira -> sprint-testing CI trigger
 
-`.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes (JQL) for tickets in QA status. For each one found, it labels the ticket `ai-qa-picked-up` (so the next poll skips it), posts a "testing started" comment, then runs `/sprint-testing` against it inside a GitHub Actions job via the Claude Code GitHub Action, on a fresh branch.
+`.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes for every ticket tagged with the `JIRA_LABEL` label (any project, any status — the label is the sole selection criterion, deliberately, so tagging a ticket is what opts it in). For each one found, it labels the ticket `ai-qa-picked-up` too (so the next poll skips it), posts a "testing started" comment, then runs `/sprint-testing` against it inside a GitHub Actions job via the Claude Code GitHub Action, on a fresh branch.
 
-The exclusion JQL is `(labels != "ai-qa-picked-up" OR labels is EMPTY)`, not just `labels != "ai-qa-picked-up"` — Jira's `!=` on a multi-value field like `labels` excludes issues with *no* labels at all, which is the normal state for a ticket this automation hasn't touched yet. Dropping the `OR labels is EMPTY` clause silently returns zero tickets even when real ones are sitting right there in the configured status.
+The JQL is `labels = "$JIRA_LABEL" AND labels != "ai-qa-picked-up"`. That plain `!=` is safe here specifically because it's ANDed with `labels = "$JIRA_LABEL"` — a ticket matching that always has a non-empty `labels` field, so Jira's well-known `!=` gotcha (a plain `labels != "x"` also excludes issues with *no* labels at all, which bit an earlier version of this query when it filtered by status instead) doesn't apply. If this ever goes back to selecting by status/project instead of a label, that exclusion needs `OR labels is EMPTY` added back — see the workflow's git history for the exact fix if so.
 
 If you're reading this because a CI run pointed you here: your job is to run sprint-testing for the ticket, then finish the two things below yourself before you're done.
 
@@ -46,5 +46,5 @@ The `ai-qa-picked-up` label gets added *before* this job runs, so if this run fa
 
 Two ways, both do the real thing (not a dry run):
 
-- **Manual run**: Actions tab -> Jira QA Trigger -> Run workflow, with the `ticket_key` input set to a specific ticket — skips the status/label filter and processes just that one ticket, regardless of its current status.
+- **Manual run**: Actions tab -> Jira QA Trigger -> Run workflow, with the `ticket_key` input set to a specific ticket — skips the label filter and processes just that one ticket, whether or not it's tagged.
 - **Open a PR that touches this workflow file** (or this doc): the `pull_request` trigger is scoped to changes to `.github/workflows/jira-qa-trigger.yml` and this file specifically, so iterating on the trigger itself gets fast feedback without waiting on the 15-minute schedule. It still polls real Jira and can act on real tickets — it's scoped by file path, not made safe by being a PR.

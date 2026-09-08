@@ -96,4 +96,4 @@ No issue tracker or TMS is wired up here on purpose — test cases, bugs, and ru
 
 **CI**: `.github/workflows/playwright.yml` runs the suite (chromium/firefox/webkit) on every push/PR to `main`, plus manual `workflow_dispatch`. No secrets required today — nothing needs authenticating against the public sandbox target.
 
-**Jira trigger**: `.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes for tickets in QA status and runs `/sprint-testing` against each one automatically, opening a PR and commenting the result back on the ticket. Setup: `.claude/skills/agentic-qa-core/references/jira-ci-trigger.md`.
+**Jira trigger**: `.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes for tickets tagged with the `JIRA_LABEL` label and runs `/sprint-testing` against each one automatically, opening a PR and commenting the result back on the ticket. Setup: `.claude/skills/agentic-qa-core/references/jira-ci-trigger.md`.

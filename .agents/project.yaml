@@ -33,7 +33,9 @@ environments:
 jira_ci_trigger:
   workflow: ".github/workflows/jira-qa-trigger.yml"
   doc: ".claude/skills/agentic-qa-core/references/jira-ci-trigger.md"
-  # Needs repo VARIABLES: JIRA_SITE, JIRA_PROJECT_KEY, JIRA_QA_STATUS
+  # Selection is by LABEL, not status/project - every ticket tagged JIRA_LABEL gets picked up,
+  # regardless of which project or status it's in.
+  # Needs repo VARIABLES: JIRA_SITE, JIRA_LABEL
   # Needs repo SECRETS: JIRA_EMAIL, JIRA_TOKEN, ANTHROPIC_API_KEY (or CLAUDE_CODE_OAUTH_TOKEN)
   # Needs the Claude GitHub App installed on this repo: https://github.com/apps/claude
 
