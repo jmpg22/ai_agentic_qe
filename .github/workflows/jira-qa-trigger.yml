@@ -13,11 +13,12 @@
 # Also required: the Claude GitHub App installed on this repo - https://github.com/apps/claude
 # See .claude/skills/agentic-qa-core/references/jira-ci-trigger.md for what happens inside the job.
 #
-# The pull_request trigger below is scoped to PRs that touch this workflow file (or its doc) -
-# it's a fast way to smoke-test a change to the trigger itself against real Jira/CI, without
-# waiting for the 15-minute schedule. It still does the real thing (polls Jira, can open a PR,
-# comments on a real ticket) - it's not a dry run. Broaden the `paths:` filter (or drop it) if you
-# want this to run on every PR instead of just ones editing this file.
+# The pull_request and push(main) triggers below are both scoped to changes that touch this
+# workflow file (or its doc) - a fast way to smoke-test a change to the trigger itself against
+# real Jira/CI on every push to an open PR, and again once that PR merges into main, without
+# waiting for the 15-minute schedule. Both still do the real thing (poll Jira, can open a PR,
+# comment on a real ticket) - it's not a dry run. Broaden the `paths:` filter (or drop it) on
+# either if you want it to run on every PR/push instead of just ones editing this file.
 
 name: Jira QA Trigger
 
@@ -32,6 +33,12 @@ on:
         type: string
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/jira-qa-trigger.yml"
+      - ".claude/skills/agentic-qa-core/references/jira-ci-trigger.md"
+  push:
+    branches:
+      - main
     paths:
       - ".github/workflows/jira-qa-trigger.yml"
       - ".claude/skills/agentic-qa-core/references/jira-ci-trigger.md"

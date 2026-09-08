@@ -44,7 +44,10 @@ The `ai-qa-picked-up` label gets added *before* this job runs, so if this run fa
 
 ## Testing this without waiting for a real ticket
 
-Two ways, both do the real thing (not a dry run):
+Three ways, all do the real thing (not a dry run):
 
 - **Manual run**: Actions tab -> Jira QA Trigger -> Run workflow, with the `ticket_key` input set to a specific ticket — skips the label filter and processes just that one ticket, whether or not it's tagged.
-- **Open a PR that touches this workflow file** (or this doc): the `pull_request` trigger is scoped to changes to `.github/workflows/jira-qa-trigger.yml` and this file specifically, so iterating on the trigger itself gets fast feedback without waiting on the 15-minute schedule. It still polls real Jira and can act on real tickets — it's scoped by file path, not made safe by being a PR.
+- **Push to an open PR that touches this workflow file** (or this doc): the `pull_request` trigger (types `opened`/`synchronize`/`reopened`) fires on every push to that PR, scoped by `paths:` to changes in `.github/workflows/jira-qa-trigger.yml` and this file. Good for iterating on the trigger itself without waiting on the 15-minute schedule or merging first.
+- **Merge that PR into `main`**: the `push` trigger (same `paths:` scoping) fires again once the change lands on `main`, so you get a second confirmation the merged version still works, not just the PR's copy.
+
+None of these are made safe by being scoped to a PR or to `main` — they're scoped by file path, not by risk. All three still poll real Jira and can act on real tickets.
