@@ -63,6 +63,12 @@ You don't need special commands. Just describe what you want in your own words. 
 
 This also happens automatically every time code is pushed to GitHub — you can watch it run under the repository's **Actions** tab, no setup needed on your end.
 
+## 9. Tickets get tested automatically when they reach QA status
+
+Separately from the above: every 15 minutes, this project checks Jira for any ticket that's been moved into QA status. When it finds one, it automatically runs a testing pass on it, comments on the ticket to say it started, and later comments again with what it found — plus opens a pull request in the repo with the details. You don't have to do anything to trigger this; just move a ticket to QA status and check back on it (or the repository's **Pull requests** tab) in a little while.
+
+(Whoever's driving the technical setup needs to configure this once — see `.claude/skills/agentic-qa-core/references/jira-ci-trigger.md` — but once it's set up, it just runs.)
+
 If you're not sure what to ask for, just describe your situation in plain language — "we just built X, what should I do next?" — and you'll get pointed in the right direction.
 
 ## 5. How to read a GO / CAUTION / NO-GO verdict

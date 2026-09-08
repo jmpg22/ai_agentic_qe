@@ -25,8 +25,17 @@ environments:
 # See .claude/skills/qa-obsidian-notes/SKILL.md for the taxonomy, and AGENTS.md's
 # tool-resolution table for how [ISSUE_TRACKER_TOOL] / [TMS_TOOL] would resolve if one gets added.
 #
-# JIRA_TOKEN exists in .env (local) and as a GitHub Actions secret (CI) as of 2026-09, ready for
-# whenever real Jira integration gets added — but no skill reads it yet, so it's currently inert.
+# Jira IS used by one thing: .github/workflows/jira-qa-trigger.yml polls for tickets in QA
+# status and runs /sprint-testing against them. That's CI-only glue (curl calls in the workflow +
+# .claude/skills/agentic-qa-core/references/jira-ci-trigger.md), not a pipeline-wide integration —
+# [ISSUE_TRACKER_TOOL] / [TMS_TOOL] below are still unresolved for local/manual runs.
+
+jira_ci_trigger:
+  workflow: ".github/workflows/jira-qa-trigger.yml"
+  doc: ".claude/skills/agentic-qa-core/references/jira-ci-trigger.md"
+  # Needs repo VARIABLES: JIRA_SITE, JIRA_PROJECT_KEY, JIRA_QA_STATUS
+  # Needs repo SECRETS: JIRA_EMAIL, JIRA_TOKEN, ANTHROPIC_API_KEY (or CLAUDE_CODE_OAUTH_TOKEN)
+  # Needs the Claude GitHub App installed on this repo: https://github.com/apps/claude
 
 notes_vault:
   provider: "obsidian"

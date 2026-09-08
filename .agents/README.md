@@ -20,7 +20,7 @@ Full test scope/coverage detail lives in `.context/`, not here — `project.yaml
 
 - The target environment changes from the `sandbox` (playwright.dev) placeholder to a real application — update `environments.sandbox` (or add a new env) and `.context/business/business-feature-map.md` together.
 - CI changes (a new trigger, a matrix, secrets get added) — keep `ci.configured`/`ci.workflow`/`ci.triggers` in sync with `.github/workflows/playwright.yml` so `regression-testing` knows what's actually running.
-- A real issue tracker or TMS gets added later — add an `issue_tracker:`/`tms:` block here (see `turn_test_engine`'s `project.yaml` for the shape, if you want a reference) and update `AGENTS.md`'s tool-resolution table to match.
+- A real issue tracker or TMS gets added later — add an `issue_tracker:`/`tms:` block here (see `turn_test_engine`'s `project.yaml` for the shape, if you want a reference) and update `AGENTS.md`'s tool-resolution table to match. (Note: `jira_ci_trigger` already exists below for the narrower CI-only Jira-polling flow — that's separate from a full pipeline-wide tracker integration.)
 
 ## Active environment per session
 

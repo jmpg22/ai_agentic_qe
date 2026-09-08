@@ -52,15 +52,19 @@ Five roles under `.claude/agents/`, mapped to Plan / Code / Review / Exploration
 
 If a real tracker/TMS gets added later, add the resolution here and in `.agents/project.yaml` — the skills above already reference `qa-obsidian-notes` rather than hardcoding "no tracker," so the swap is localized to this table, `project.yaml`, and whichever skill(s) need a new integration skill (see `turn_test_engine`'s `zephyr-scale`/`acli` skills for the shape of what that looks like).
 
-## 6. Notes vault (Obsidian)
+## 6. Jira -> sprint-testing CI trigger
+
+`.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes for tickets in QA status and runs `/sprint-testing` against each one automatically (Claude Code GitHub Action), opening a PR and commenting the result back on the ticket. Setup and what happens inside that run: `.claude/skills/agentic-qa-core/references/jira-ci-trigger.md`. This is CI-only glue — it doesn't change how `[ISSUE_TRACKER_TOOL]` / `[TMS_TOOL]` resolve for local/manual runs (see section 5 above, still unconfigured).
+
+## 7. Notes vault (Obsidian)
 
 `docs/` is the vault — open it directly in Obsidian (File → Open folder as vault), no setup needed. Taxonomy and frontmatter conventions: `.claude/skills/qa-obsidian-notes/SKILL.md`. If the **Desktop Commander** plugin (with its `obsidian-vault` skill) is installed, prefer it for actually reading/writing notes; without it, plain file tools work identically since these are just markdown files.
 
-## 7. Architecture quick-reference
+## 8. Architecture quick-reference
 
 `BasePage` (`tests/page-objects/base.page.ts`) → domain `Page` class (extends `BasePage`, one per page/flow) → spec file (`tests/*.spec.ts`). Import alias `@/*` → `tests/*` (from `tsconfig.json`). Full detail: `.claude/skills/test-automation/references/architecture.md`.
 
-## 8. Daily workflow
+## 9. Daily workflow
 
 You decide which stage runs and when to move to the next one — nothing chains automatically:
 

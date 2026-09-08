@@ -95,3 +95,5 @@ Staff (subagents under `.claude/agents/`): `qa-test-architect` (Plan), `qa-autom
 No issue tracker or TMS is wired up here on purpose — test cases, bugs, and run history live as Obsidian notes in `docs/` instead (`/qa-obsidian-notes`). This project currently points at a sandbox target (`https://playwright.dev`) rather than a real application — swap that in `.agents/project.yaml` and `.context/business/business-feature-map.md` whenever a real target is ready.
 
 **CI**: `.github/workflows/playwright.yml` runs the suite (chromium/firefox/webkit) on every push/PR to `main`, plus manual `workflow_dispatch`. No secrets required today — nothing needs authenticating against the public sandbox target.
+
+**Jira trigger**: `.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes for tickets in QA status and runs `/sprint-testing` against each one automatically, opening a PR and commenting the result back on the ticket. Setup: `.claude/skills/agentic-qa-core/references/jira-ci-trigger.md`.
