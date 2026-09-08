@@ -1,25 +1,3 @@
-# Polls Jira for tickets tagged with a specific label and runs /sprint-testing against each one
-# via the Claude Code GitHub Action, on its own branch, opening a PR with the results.
-#
-# Required GitHub repo VARIABLES (Settings -> Secrets and variables -> Actions -> Variables):
-#   JIRA_SITE    e.g. "yourcompany.atlassian.net" (no https://)
-#   JIRA_LABEL   exact Jira label - every ticket tagged with it gets picked up, any status/project.
-#
-# Required GitHub repo SECRETS (Settings -> Secrets and variables -> Actions -> Secrets):
-#   JIRA_EMAIL          the Atlassian account email paired with JIRA_TOKEN
-#   JIRA_TOKEN          Jira API token (already added)
-#   ANTHROPIC_API_KEY   Claude API key (platform.claude.com) - or use claude_code_oauth_token instead, see below
-#
-# Also required: the Claude GitHub App installed on this repo - https://github.com/apps/claude
-# See .claude/skills/agentic-qa-core/references/jira-ci-trigger.md for what happens inside the job.
-#
-# The pull_request and push(main) triggers below are both scoped to changes that touch this
-# workflow file (or its doc) - a fast way to smoke-test a change to the trigger itself against
-# real Jira/CI on every push to an open PR, and again once that PR merges into main, without
-# waiting for the 15-minute schedule. Both still do the real thing (poll Jira, can open a PR,
-# comment on a real ticket) - it's not a dry run. Broaden the `paths:` filter (or drop it) on
-# either if you want it to run on every PR/push instead of just ones editing this file.
-
 name: Jira QA Trigger
 
 on:
@@ -75,9 +53,6 @@ jobs:
             JQL="key = \"${TICKET_KEY_OVERRIDE}\""
           else
             : "${JIRA_LABEL:?Set the JIRA_LABEL repo variable}"
-            # A ticket matching labels = "$JIRA_LABEL" always has a non-empty labels field, so the
-            # "!= excludes empty" JQL gotcha (see jira-ci-trigger.md) doesn't apply here - no need
-            # for the "OR labels is EMPTY" workaround this query needed when it filtered by status.
             JQL="labels = \"${JIRA_LABEL}\" AND labels != \"ai-qa-picked-up\""
           fi
           BODY=$(jq -n --arg jql "$JQL" '{jql: $jql, maxResults: 25, fields: ["key","summary"]}')
@@ -98,12 +73,12 @@ jobs:
             cat response.json
             exit 1
           fi
-          # CHANGED: Output only ticket keys as a simple array for matrix
           jq -c '[.issues[]?.key]' response.json > tickets.json
           COUNT=$(jq 'length' tickets.json)
           echo "tickets=$(cat tickets.json)" >> "$GITHUB_OUTPUT"
           if [ "$COUNT" -gt 0 ]; then echo "has_tickets=true" >> "$GITHUB_OUTPUT"; else echo "has_tickets=false" >> "$GITHUB_OUTPUT"; fi
           echo "Found $COUNT ticket(s) matching: $JQL"
+          
       - name: Mark tickets as picked up + post a "testing started" comment
         if: steps.find.outputs.has_tickets == 'true'
         run: |
@@ -121,6 +96,7 @@ jobs:
               --data '{"body":{"type":"doc","version":1,"content":[{"type":"paragraph","content":[{"type":"text","text":"AI QA picked this up and started a sprint-testing pass. Results will follow as a comment here, with a pull request in the repo."}]}]}}' \
               "https://${JIRA_SITE}/rest/api/3/issue/${KEY}/comment"
           done
+
   run-sprint-testing:
     needs: find-tickets
     if: needs.find-tickets.outputs.has_tickets == 'true'
@@ -162,17 +138,21 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # If you'd rather use a Claude subscription instead of API billing, replace the line
-          # above with: claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true  # Enable for debugging
           prompt: |
-            /sprint-testing
-            Jira ticket ${{ matrix.ticket }}: "Run the sprint-testing plan against this ticket"
-            This ticket is tagged for AI QA testing. Run the sprint-testing plan -> execute -> report
-            phases against it. File the ATR and any bug notes under docs/ exactly as
-            .claude/skills/qa-obsidian-notes/SKILL.md describes.
-            Then follow .claude/skills/agentic-qa-core/references/jira-ci-trigger.md for how to
-            open a pull request with what you found and how to comment the result back on
-            ticket ${{ matrix.ticket }} in Jira.
+            Use the sprint-testing skill to test Jira ticket ${{ matrix.ticket }}
+            
+            Steps:
+            1. Read the Jira ticket ${{ matrix.ticket }} to understand requirements
+            2. Generate test cases based on the ticket content
+            3. Execute the tests automatically using Playwright
+            4. File the ATR and any bug notes under docs/ as described in .claude/skills/qa-obsidian-notes/SKILL.md
+            5. Follow .claude/skills/agentic-qa-core/references/jira-ci-trigger.md to open a PR and comment results
+            
+            Jira API credentials are available in environment variables:
+            - JIRA_SITE: ${{ vars.JIRA_SITE }}
+            - JIRA_EMAIL is set
+            - JIRA_TOKEN is set
           claude_args: |
             --allowedTools "Read,Write,Edit,Bash,Grep,Glob"
-            --max-turns 30
+            --max-turns 50
