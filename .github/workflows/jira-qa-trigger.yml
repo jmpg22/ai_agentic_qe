@@ -28,7 +28,7 @@ on:
   workflow_dispatch:
     inputs:
       ticket_key:
-        description: "Optional: test with one specific ticket key instead of polling for tickets tagged with JIRA_LABEL"
+        description: "LEAVE BLANK to run the real JIRA_LABEL search. Only fill this in to test ONE issue by its Jira key (e.g. SCRUM-1) - NOT a label, NOT JIRA_LABEL's value."
         required: false
         type: string
   pull_request:
@@ -69,6 +69,10 @@ jobs:
           : "${JIRA_TOKEN:?Set the JIRA_TOKEN repo secret}"
 
           if [ -n "${TICKET_KEY_OVERRIDE:-}" ]; then
+            if ! [[ "$TICKET_KEY_OVERRIDE" =~ ^[A-Za-z][A-Za-z0-9]*-[0-9]+$ ]]; then
+              echo "::error::ticket_key '$TICKET_KEY_OVERRIDE' doesn't look like a Jira issue key (expected something like SCRUM-1). Leave ticket_key BLANK to run the real JIRA_LABEL search instead - it is not the place for JIRA_LABEL's value."
+              exit 1
+            fi
             JQL="key = \"${TICKET_KEY_OVERRIDE}\""
           else
             : "${JIRA_LABEL:?Set the JIRA_LABEL repo variable}"
