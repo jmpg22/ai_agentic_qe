@@ -2,6 +2,8 @@
 
 `.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes (JQL) for tickets in QA status. For each one found, it labels the ticket `ai-qa-picked-up` (so the next poll skips it), posts a "testing started" comment, then runs `/sprint-testing` against it inside a GitHub Actions job via the Claude Code GitHub Action, on a fresh branch.
 
+The exclusion JQL is `(labels != "ai-qa-picked-up" OR labels is EMPTY)`, not just `labels != "ai-qa-picked-up"` — Jira's `!=` on a multi-value field like `labels` excludes issues with *no* labels at all, which is the normal state for a ticket this automation hasn't touched yet. Dropping the `OR labels is EMPTY` clause silently returns zero tickets even when real ones are sitting right there in the configured status.
+
 If you're reading this because a CI run pointed you here: your job is to run sprint-testing for the ticket, then finish the two things below yourself before you're done.
 
 ## What's already available in that CI run

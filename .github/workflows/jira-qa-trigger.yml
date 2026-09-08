@@ -68,7 +68,7 @@ jobs:
           else
             : "${JIRA_PROJECT_KEY:?Set the JIRA_PROJECT_KEY repo variable}"
             : "${JIRA_QA_STATUS:?Set the JIRA_QA_STATUS repo variable}"
-            JQL="project = \"${JIRA_PROJECT_KEY}\" AND status = \"${JIRA_QA_STATUS}\" AND labels != \"ai-qa-picked-up\""
+            JQL="project = \"${JIRA_PROJECT_KEY}\" AND status = \"${JIRA_QA_STATUS}\" AND (labels != \"ai-qa-picked-up\" OR labels is EMPTY)"
           fi
 
           BODY=$(jq -n --arg jql "$JQL" '{jql: $jql, maxResults: 25, fields: ["key","summary"]}')
