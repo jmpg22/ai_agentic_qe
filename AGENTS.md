@@ -54,7 +54,7 @@ If a real tracker/TMS gets added later, add the resolution here and in `.agents/
 
 ## 6. Jira -> sprint-testing CI trigger
 
-`.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes for tickets in QA status and runs `/sprint-testing` against each one automatically (Claude Code GitHub Action), opening a PR and commenting the result back on the ticket. Setup and what happens inside that run: `.claude/skills/agentic-qa-core/references/jira-ci-trigger.md`. This is CI-only glue — it doesn't change how `[ISSUE_TRACKER_TOOL]` / `[TMS_TOOL]` resolve for local/manual runs (see section 5 above, still unconfigured).
+`.github/workflows/jira-qa-trigger.yml` polls Jira every 15 minutes for tickets tagged with the `JIRA_LABEL` label (any project/status) and runs `/sprint-testing` against each one automatically (Claude Code GitHub Action), opening a PR and commenting the result back on the ticket. Setup and what happens inside that run: `.claude/skills/agentic-qa-core/references/jira-ci-trigger.md`. This is CI-only glue — it doesn't change how `[ISSUE_TRACKER_TOOL]` / `[TMS_TOOL]` resolve for local/manual runs (see section 5 above, still unconfigured).
 
 ## 7. Notes vault (Obsidian)
 
