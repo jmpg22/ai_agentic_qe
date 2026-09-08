@@ -62,17 +62,33 @@ jobs:
 
           BODY=$(jq -n --arg jql "$JQL" '{jql: $jql, maxResults: 25, fields: ["key","summary"]}')
 
-          RESPONSE=$(curl -sS -X POST \
+          echo "JQL: $JQL"
+
+          HTTP_STATUS=$(curl -sS -o response.json -w "%{http_code}" -X POST \
             -u "${JIRA_EMAIL}:${JIRA_TOKEN}" \
             -H "Content-Type: application/json" -H "Accept: application/json" \
             --data "$BODY" \
             "https://${JIRA_SITE}/rest/api/3/search/jql")
 
-          echo "$RESPONSE" | jq -c '[.issues[]? | {key: .key, summary: .fields.summary}]' > tickets.json
+          echo "Jira responded HTTP $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "::error::Jira API call failed (HTTP $HTTP_STATUS) - check JIRA_SITE/JIRA_EMAIL/JIRA_TOKEN and that the project key/status name are exactly right. Response body:"
+            cat response.json
+            exit 1
+          fi
+
+          if jq -e '.errorMessages or .errors' response.json > /dev/null 2>&1; then
+            echo "::error::Jira returned 200 but with an error body (bad JQL - check JIRA_PROJECT_KEY/JIRA_QA_STATUS spelling and case):"
+            cat response.json
+            exit 1
+          fi
+
+          jq -c '[.issues[]? | {key: .key, summary: .fields.summary}]' response.json > tickets.json
           COUNT=$(jq 'length' tickets.json)
           echo "tickets=$(cat tickets.json)" >> "$GITHUB_OUTPUT"
           if [ "$COUNT" -gt 0 ]; then echo "has_tickets=true" >> "$GITHUB_OUTPUT"; else echo "has_tickets=false" >> "$GITHUB_OUTPUT"; fi
-          echo "Found $COUNT ticket(s)."
+          echo "Found $COUNT ticket(s) matching: $JQL"
 
       - name: Mark tickets as picked up + post a "testing started" comment
         if: steps.find.outputs.has_tickets == 'true'
